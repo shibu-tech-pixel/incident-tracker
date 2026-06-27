@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Edit Incident</title>
+</head>
+
+<body>
+
+<h1>Edit Incident</h1>
+
+<form action="/update" method="POST">
+
+    <p>Incident ID</p>
+    <input type="text" name="incident_id" value="{{ incident[0] }}" readonly>
+
+    <p>Application Name</p>
+    <input type="text" name="application_name" value="{{ incident[1] }}">
+
+    <p>Severity</p>
+
+    <select name="severity">
+        <option {% if incident[2]=='High' %}selected{% endif %}>High</option>
+        <option {% if incident[2]=='Medium' %}selected{% endif %}>Medium</option>
+        <option {% if incident[2]=='Low' %}selected{% endif %}>Low</option>
+    </select>
+
+    <p class="mt-3">Status</p>
+
+<select name="status" class="form-select">
+
+    <option {% if incident[3]=='Open' %}selected{% endif %}>Open</option>
+
+    <option {% if incident[3]=='In Progress' %}selected{% endif %}>In Progress</option>
+
+    <option {% if incident[3]=='Pending' %}selected{% endif %}>Pending</option>
+
+    <option {% if incident[3]=='Resolved' %}selected{% endif %}>Resolved</option>
+
+    <option {% if incident[3]=='Closed' %}selected{% endif %}>Closed</option>
+
+</select>
+
+    <br><br>
+
+    <button type="submit">
+        Update Incident
+    </button>
+
+</form>
+
+</body>
+</html>
