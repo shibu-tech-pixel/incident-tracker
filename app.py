@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect
 import sqlite3
 from datetime import datetime
+from zoneinfo import ZoneInfo
+import os
 
 app = Flask(__name__)
 
@@ -34,8 +36,8 @@ def save():
     application_name = request.form["application_name"]
     severity = request.form["severity"]
     status = request.form["status"]
-    created_on = datetime.now().strftime("%d-%b-%Y %I:%M %p")
-    last_updated = ""
+    created_on = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%d-%b-%Y %I:%M %p")
+    last_updated = datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%d-%b-%Y %I:%M %p")
     print("Incident ID:", incident_id)
     print("Application:", application_name)
     print("Severity:", severity)
@@ -203,5 +205,8 @@ WHERE incident_id = ?
 
     return redirect("/view")
 
+import os
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
