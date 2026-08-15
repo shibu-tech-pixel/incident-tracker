@@ -1,11 +1,20 @@
 from flask import Flask, render_template, request, redirect
-import sqlite3
 from datetime import datetime
+import psycopg2
+import os
 
 app = Flask(__name__)
 
+def get_db_connection():
+    database_url = os.environ.get("DATABASE_URL")
+
+    if not database_url:
+        raise Exception("DATABASE_URL environment variable is missing")
+
+    return psycopg2.connect(database_url)
+
 # Create the table if it doesn't exist
-conn = sqlite3.connect("database.db")
+conn = get_db_connection()
 cursor = conn.cursor()
 
 cursor.execute("""
@@ -41,7 +50,7 @@ def save():
     print("Status:", status)
 
     try:
-        conn = sqlite3.connect("database.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -52,7 +61,7 @@ def save():
             status,
             created_on
         )
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
         """, (
             incident_id,
             application_name,
@@ -76,13 +85,13 @@ def search():
 
     incident_id = request.form["incident_id"]
 
-    conn = sqlite3.connect("database.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
     SELECT *
     FROM incidents
-    WHERE incident_id = ?
+    WHERE incident_id = %s
     """, (incident_id,))
 
     incidents = cursor.fetchall()
@@ -95,7 +104,7 @@ def search():
 @app.route("/view")
 def view():
 
-    conn = sqlite3.connect("database.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -115,15 +124,17 @@ def view():
 @app.route("/delete/<incident_id>")
 def delete(incident_id):
 
-    conn = sqlite3.connect("database.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "DELETE FROM incidents WHERE incident_id = ?",
+        "DELETE FROM incidents WHERE incident_id = %s",
         (incident_id,)
     )
 
     conn.commit()
+
+    cursor.close()
     conn.close()
 
     return redirect("/view")
@@ -131,11 +142,11 @@ def delete(incident_id):
 @app.route("/edit/<incident_id>")
 def edit(incident_id):
 
-    conn = sqlite3.connect("database.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT * FROM incidents WHERE incident_id = ?",
+        "SELECT * FROM incidents WHERE incident_id = %s",
         (incident_id,)
     )
 
@@ -153,23 +164,24 @@ def update():
     severity = request.form["severity"]
     status = request.form["status"]
 
-    conn = sqlite3.connect("database.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
-UPDATE incidents
-SET application_name = ?,
-    severity = ?,
-    status = ?
-WHERE incident_id = ?
-""", (
-    application_name,
-    severity,
-    status,
-    incident_id
-))
+        UPDATE incidents
+        SET application_name = %s,
+            severity = %s,
+            status = %s
+        WHERE incident_id = %s
+    """, (
+        application_name,
+        severity,
+        status,
+        incident_id
+    ))
 
     conn.commit()
+    cursor.close()
     conn.close()
 
     return redirect("/view")
